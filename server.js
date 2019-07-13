@@ -55,6 +55,7 @@ winston.add(winston.transports.File, {
  * @return {Object} Configuration
  */
 function loadConfiguration () {
+    winston.info('CONFIG_FILE: %s', CONFIG_FILE);
     if (!fs.existsSync(CONFIG_FILE)) {
         winston.info('No previous configuration found, creating one');
         fs.writeFileSync(CONFIG_FILE, fs.readFileSync(SAMPLE_FILE));
@@ -112,9 +113,9 @@ function migrateState (version) {
     }
 
     // This is the previous default, but it's totally wrong
-    if (!config.mqtt.preface) {
-        config.mqtt.preface = '/smartthings';
-    }
+    //if (!config.mqtt.preface) {
+    //    config.mqtt.preface = '/smartthings';
+    //}
 
     // Default Suffixes
     if (!config.mqtt[SUFFIX_READ_STATE]) {
@@ -225,8 +226,10 @@ function handleSubscribeEvent (req, res) {
  * @return {String}             MQTT Topic name
  */
 function getTopicFor (device, property, type) {
-    var tree = [config.mqtt.preface, device, property],
-        suffix;
+//    var tree = [config.mqtt.preface, device, property],
+//        suffix;
+    var tree = [device, property],
+    suffix;
 
     if (type === TOPIC_COMMAND) {
         suffix = config.mqtt[SUFFIX_COMMAND];
@@ -254,7 +257,7 @@ function parseMQTTMessage (topic, message) {
     winston.info('Incoming message from MQTT: %s = %s', topic, contents);
 
     // Remove the preface from the topic before splitting it
-    var pieces = topic.substr(config.mqtt.preface.length + 1).split('/'),
+    var pieces = topic.split('/'),
         device = pieces[0],
         property = pieces[1],
         topicReadState = getTopicFor(device, property, TOPIC_READ_STATE),
@@ -310,7 +313,7 @@ async.series([
     function loadFromDisk (next) {
         var state;
 
-        winston.info('Starting SmartThings MQTT Bridge - v%s', CURRENT_VERSION);
+        winston.info('*** Starting SmartThings MQTT Bridge - v%s', CURRENT_VERSION);
         winston.info('Loading configuration');
         config = loadConfiguration();
 
